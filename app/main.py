@@ -8,7 +8,7 @@ from app.api.v1.endpoints import users
 Base.metadata.create_all(bind=engine)
 app = FastAPI(title=settings.PROJECT_NAME)
 
-app.include_router(users.router, prefix='/api/users', tags=[users])
+app.include_router(users.user_router, prefix='/api/users', tags=["users"])
 
 @app.get("/")
 def root():

@@ -8,7 +8,7 @@ from app.core.config import settings
 from app.services import user as user_service
 from app.models.user import User
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
 
 def get_db() -> Generator:
     db = SessionLocal()

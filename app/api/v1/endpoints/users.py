@@ -1,10 +1,12 @@
+from typing import List
+
 from fastapi import APIRouter, HTTPException, status, Depends
-from pydantic import HttpUrl
 from sqlalchemy.orm import Session
 from app.api import deps
-from app.schemas.user import User, UserCreate, UserUpdate, UserLogin
+from app.schemas.user import User, UserCreate, UserUpdate, UserLogin, Token
 from app.services import user as user_services
 from app.core import security
+
 user_router = APIRouter()
 
 @user_router.post("/register", response_model=User, status_code=status.HTTP_201_CREATED)
@@ -27,9 +29,26 @@ def update_user(user_id: int, user: UserUpdate, db: Session = Depends(deps.get_d
     return db_user
 
 
-@user_router.post("/login", response_model=User, status_code=status.HTTP_201_CREATED)
-def login(user: UserLogin, db: Session = Depends(deps.get_db)):
-    pass
+@user_router.post("/login", response_model=Token, status_code=status.HTTP_200_OK)
+def login(
+    credentials: UserLogin,
+    db: Session = Depends(deps.get_db),
+) -> Token:
+    user = user_services.authenticate_user_by_email(
+        db, email=credentials.email, password=credentials.password
+    )
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive",
+        )
+    access_token = security.create_access_token(subject=user.username)
+    return Token(access_token=access_token, token_type="bearer")
 
 @user_router.delete("delete/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_user(

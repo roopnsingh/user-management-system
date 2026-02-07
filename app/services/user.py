@@ -22,7 +22,9 @@ def create_user(db: Session, user: UserCreate) -> User:
         email=user.email,
         username=user.username,
         hashed_password=hashed_password,
-        full_name=user.full_name
+        first_name=user.first_name,
+        last_name=user.last_name,
+        is_active=True,
     )
     db.add(db_user)
     db.commit()
@@ -56,6 +58,18 @@ def delete_user(db: Session, user_id: int) -> bool:
 
 def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
     user = get_user_by_username(db, username)
+    if not user:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
+    return user
+
+
+def authenticate_user_by_email(
+    db: Session, email: str, password: str
+) -> Optional[User]:
+    """Authenticate by email and password. Returns user if valid, None otherwise."""
+    user = get_user_by_email(db, email)
     if not user:
         return None
     if not verify_password(password, user.hashed_password):

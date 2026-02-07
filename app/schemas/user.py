@@ -1,5 +1,5 @@
 import token
-from pydantic import BaseModel, EmailStr, Field, SecretStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr, field_validator
 from typing import Optional
 import re
 
@@ -11,12 +11,12 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     first_name: str
     last_name: str
-    password: SecretStr = Field(..., min_length=8)
+    password: str = Field(..., min_length=8)
 
     @field_validator("password")
     @classmethod
-    def validate_password(cls, value: SecretStr) -> SecretStr:
-        pwd = value.get_secret_value()
+    def validate_password(cls, value: str) -> str:
+        pwd = value
 
         if not re.search(r"[A-Z]", pwd):
             raise ValueError("Password must contain at least one uppercase letter")
@@ -34,15 +34,15 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    password: Optional[SecretStr] = None
+    password: Optional[str] = None
 
     @field_validator("password")
     @classmethod
-    def validate_password(cls, value: Optional[SecretStr]) -> Optional[SecretStr]:
+    def validate_password(cls, value: Optional[str]) -> Optional[str]:
         if value is None:
             return value
 
-        pwd = value.get_secret_value()
+        pwd = value
 
         if not re.search(r"[A-Z]", pwd):
             raise ValueError("Password must contain at least one uppercase letter")
@@ -56,18 +56,21 @@ class UserUpdate(BaseModel):
         return value
 
 class User(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     first_name: str
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: SecretStr
+    password: str
 
 class Token(BaseModel):
     access_token: str
-    token_type: str
+    token_type: str = "bearer"
 
-class Token(BaseModel):
+
+class TokenWithRefresh(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
