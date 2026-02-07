@@ -56,7 +56,8 @@ class UserUpdate(BaseModel):
         return value
 
 class User(BaseModel):
-    pass
+    id: int
+    first_name: str
 
 class UserLogin(BaseModel):
     email: EmailStr
