@@ -81,6 +81,9 @@ class RefreshTokenRequest(BaseModel):
 
 
 class TokenPayload(BaseModel):
-    sub: int
+    # Subject of the token – in this app we use the username (string)
+    sub: str
+    # Expiration timestamp
     exp: int
-    type: str
+    # Token type, defaulting to "access" so it's optional in the payload
+    type: str = "access"

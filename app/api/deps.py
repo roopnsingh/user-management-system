@@ -1,12 +1,16 @@
 from typing import Generator
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
-from app.db.session import SessionLocal
+
 from app.core.config import settings
-from app.services import user as user_service
+from app.db.session import SessionLocal
 from app.models.user import User
+from app.schemas.user import TokenPayload
+from app.services import user as user_service
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/login")
 
@@ -27,13 +31,19 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+        token_data = TokenPayload(**payload)
+    except (JWTError, ValidationError):
         raise credentials_exception
-    
+
+    username = token_data.sub
+    if username is None:
+        raise credentials_exception
+
     user = user_service.get_user_by_username(db, username=username)
     if user is None:
         raise credentials_exception

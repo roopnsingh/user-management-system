@@ -21,7 +21,11 @@ def create_access_token(
         expire = datetime.utcnow() + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
-    to_encode = {"exp": expire, "sub": str(subject)}
+    to_encode = {
+        "exp": expire,
+        "sub": str(subject),
+        "type": "access",
+    }
     return jwt.encode(
         to_encode,
         settings.SECRET_KEY,
@@ -32,7 +36,7 @@ def create_access_token(
 def get_password_hash(password: str) -> str:
     if isinstance(password, bytes):
         password = password.decode("utf-8", errors="replace")
-    # Encode to bytes and truncate to bcrypt's 72-byte limit
+    
     password_bytes = password.encode("utf-8")[:BCRYPT_MAX_PASSWORD_BYTES]
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
